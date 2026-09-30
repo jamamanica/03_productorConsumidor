@@ -17,3 +17,47 @@
 #define outi(s, n) \
     printf(s, n); \
     fflush(stdout)
+
+int n;
+sem_t s, delay;
+
+void produce();
+void append();
+void consume();
+void take();
+
+void *producer(void *data)
+{
+    while (1)
+    {
+        produce();
+        sem_wait(&s);
+        append();
+        n = n + 1;
+        outi("[P] \t \t item: %d\n", n);
+        if (n == 1)
+            sem_post(&delay);
+        sem_post(&s);
+    }
+    pthread_exit(0);
+}
+
+void *consumer(void *data)
+{
+    int m;
+    sem_wait(&delay);
+    while (1)
+    {
+        sem_wait(&s);
+        take();
+        outi("[C] \t \t item: %d\n", n);
+        n = n - 1;
+        m = n;
+        sem_post(&s);
+        consume();
+        if (m == 0)
+            sem_wait(&delay);
+    }
+    pthread_exit(0);
+}
+
