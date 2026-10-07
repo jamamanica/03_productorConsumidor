@@ -83,3 +83,42 @@ void *Consumer(void *arg)
     }
     return NULL;
 }
+
+int main()
+{
+    pthread_t idP[NP], idC[NC];
+    intptr_t index;
+
+    // Inicialización de índices del buffer circular
+    shared.in = 0;
+    shared.out = 0;
+
+    // Inicialización de semáforos (Stallings Fig. 5.13)
+    sem_init(&shared.full, 0, 0);
+    sem_init(&shared.empty, 0, BUFF_SIZE);
+    sem_init(&shared.mutex, 0, 1); // Mutex inicializado en 1
+
+    /* Crear NP productores */
+    for (index = 0; index < NP; index++)
+    {
+        pthread_create(&idP[index], NULL, Producer, (void*)index);
+    }
+
+    /* Crear NC consumidores */
+    for (index = 0; index < NC; index++)
+    {
+        pthread_create(&idC[index], NULL, Consumer, (void*)index);
+    }
+
+    /* Esperar la finalización de los hilos */
+    for (index = 0; index < NP; index++)
+    {
+        pthread_join(idP[index], NULL);
+    }
+    for (index = 0; index < NC; index++)
+    {
+        pthread_join(idC[index], NULL);
+    }
+
+    pthread_exit(NULL);
+}
