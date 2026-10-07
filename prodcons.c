@@ -20,3 +20,36 @@ typedef struct {
 } sbuf_t;
 
 sbuf_t shared;
+
+void *Producer(void *arg)
+{
+    int i, item;
+    intptr_t index = (intptr_t)arg;
+
+    for (i = 0; i < NITERS; i++) {
+
+        /* Produce item */
+        item = i;
+
+        /* Prepare to write item to buf */
+
+        /* If there are no empty slots, wait */
+        sem_wait(&shared.empty);
+        /* If another thread uses the buffer, wait */
+        sem_wait(&shared.mutex);
+
+        shared.buf[shared.in] = item;
+        shared.in = (shared.in + 1) % BUFF_SIZE;
+        printf("[P%ld] Producing %d ...\n", index, item); 
+        fflush(stdout);
+
+        /* Release the buffer */
+        sem_post(&shared.mutex);
+        /* Increment the number of full slots */
+        sem_post(&shared.full);
+
+        /* Interleave producer and consumer execution */
+        if (i % 2 == 1) sleep(1);
+    }
+    return NULL;
+}
